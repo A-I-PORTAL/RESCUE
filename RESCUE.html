@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RESCUE - Autonomous Emergency Extraction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --card: #111111;
+            --text: #ffffff;
+            --text-dim: #666666;
+            --accent: #00fff0;
+            --danger: #ff0040;
+            --border: rgba(255,255,255,0.05);
+            --cybertruck-silver: #c0c0c0;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            font-weight: 300;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 3rem;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .lang-selector {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .lang-selector:hover {
+            border-color: var(--accent);
+            background: rgba(0,255,240,0.05);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #000000 0%, #050505 100%);
+            padding-top: 80px;
+        }
+
+        .hero-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.3;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23001122"/><stop offset="100%" stop-color="%23000000"/></linearGradient></defs><rect width="1920" height="1080" fill="url(%23g)"/><polygon points="960,200 400,500 400,880 960,580 1520,880 1520,500" fill="none" stroke="%2300fff0" stroke-width="1" opacity="0.2"/></svg>') center/cover;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 900px;
+            padding: 0 2rem;
+        }
+
+        h1 {
+            font-size: clamp(4rem, 10vw, 8rem);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 0.9;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(180deg, #ffffff 0%, #606060 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-dim);
+            margin-bottom: 3rem;
+            font-weight: 200;
+            letter-spacing: 0.02em;
+        }
+
+        .hero-button {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 1.25rem 3rem;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+            position: relative;
+        }
+
+        .hero-button:hover {
+            transform: translateY(-2px);
+            background: #ff1a50;
+            box-shadow: 0 20px 40px rgba(255,0,64,0.3);
+        }
+
+        .hero-button:active {
+            transform: translateY(0);
+        }
+
+        /* Vehicle Showcase */
+        .showcase {
+            padding: 8rem 3rem;
+            background: var(--surface);
+        }
+
+        .showcase-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .showcase-image {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #001122, #000511);
+            height: 600px;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 50px), calc(100% - 50px) 100%, 0 100%);
+        }
+
+        .showcase-content h2 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .showcase-content p {
+            color: var(--text-dim);
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .stat {
+            border-left: 2px solid var(--accent);
+            padding-left: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Process */
+        .process {
+            padding: 8rem 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .process h2 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 4rem;
+            font-weight: 700;
+        }
+
+        .process-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+        }
+
+        .process-step {
+            text-align: center;
+        }
+
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            transition: all 0.3s;
+        }
+
+        .process-step:hover .step-icon {
+            background: rgba(0,255,240,0.1);
+            border-color: var(--accent);
+            transform: rotate(90deg);
+        }
+
+        .step-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .step-desc {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 8rem 3rem;
+            background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .cta p {
+            color: var(--text-dim);
+            font-size: 1.25rem;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 1rem 2rem;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .download-btn:hover {
+            background: rgba(0,255,240,0.1);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-dim);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 3rem;
+            max-width: 500px;
+            width: 90%;
+            clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 30px 100%, 0 calc(100% - 30px));
+        }
+
+        .modal h3 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+        }
+
+        .modal p {
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .modal-btn.confirm {
+            background: var(--danger);
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 3rem;
+            }
+
+            .showcase-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .showcase-image {
+                height: 300px;
+            }
+
+            .process-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">RESCUE</div>
+        <div class="nav-controls">
+            <select class="lang-selector" onchange="changeLanguage(this.value)">
+                <option value="en">🇺🇸 English</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="uk">🇺🇦 Українська</option>
+                <option value="zh">🇨🇳 中文</option>
+                <option value="ru">🇷🇺 Русский</option>
+            </select>
+            <button class="hero-button" style="padding: 0.75rem 1.5rem; font-size: 0.9rem;" onclick="openModal()">
+                EMERGENCY
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-image"></div>
+        <div class="hero-content">
+            <h1>RESCUE</h1>
+            <p class="subtitle">Autonomous extraction when seconds count</p>
+            <button class="hero-button" onclick="openModal()">
+                REQUEST IMMEDIATE EXTRACTION
+            </button>
+            <p style="margin-top: 2rem; color: var(--text-dim); font-size: 0.9rem;">
+                Average response time: 6.2 minutes
+            </p>
+        </div>
+    </section>
+
+    <!-- Vehicle Showcase -->
+    <section class="showcase">
+        <div class="showcase-grid">
+            <div class="showcase-image" style="background: linear-gradient(135deg, rgba(0,17,34,0.8), rgba(0,5,17,0.9)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><rect fill="%23001122" width="800" height="600"/><polygon points="400,150 200,300 200,450 400,350 600,450 600,300" fill="none" stroke="%2300fff0" stroke-width="2" opacity="0.3"/><circle cx="250" cy="400" r="30" fill="%23111"/><circle cx="550" cy="400" r="30" fill="%23111"/></svg>') center/cover;">
+            </div>
+            <div class="showcase-content">
+                <h2>Cybertruck Rescue Fleet</h2>
+                <p>
+                    Bulletproof exoskeleton. Shatterproof armor glass. 
+                    All-terrain capability. Each autonomous unit equipped with 
+                    Optimus guardian for maximum protection and care.
+                </p>
+                <p>
+                    Our fleet operates 24/7 in active conflict zones, providing 
+                    safe passage for civilians, defectors, and anyone seeking 
+                    emergency extraction to safety.
+                </p>
+                <div class="stats-row">
+                    <div class="stat">
+                        <div class="stat-value">2,847</div>
+                        <div class="stat-label">Lives Saved</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">47</div>
+                        <div class="stat-label">Active Units</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">6.2min</div>
+                        <div class="stat-label">Avg Response</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">24/7</div>
+                        <div class="stat-label">Availability</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="showcase-grid" style="margin-top: 8rem;">
+            <div class="showcase-content">
+                <h2>Optimus Guardian Protocol</h2>
+                <p>
+                    Each extraction includes an Optimus robot trained in 
+                    de-escalation, medical triage, and protective services. 
+                    Capable of safely disarming individuals while providing 
+                    compassionate care.
+                </p>
+                <p>
+                    Advanced AI ensures appropriate response to any situation - 
+                    from medical emergencies to hostile encounters. Every extraction 
+                    prioritizes human safety and dignity.
+                </p>
+                <div class="stats-row">
+                    <div class="stat">
+                        <div class="stat-value">100%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Casualties</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">15+</div>
+                        <div class="stat-label">Languages</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">Level 5</div>
+                        <div class="stat-label">Autonomy</div>
+                    </div>
+                </div>
+            </div>
+            <div class="showcase-image" style="background: linear-gradient(135deg, rgba(0,17,34,0.8), rgba(0,5,17,0.9)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><rect fill="%23000511" width="800" height="600"/><circle cx="400" cy="200" r="40" fill="none" stroke="%2300fff0" stroke-width="2" opacity="0.5"/><rect x="350" y="250" width="100" height="150" fill="none" stroke="%2300fff0" stroke-width="2" opacity="0.5"/><line x1="350" y1="300" x2="250" y2="350" stroke="%2300fff0" stroke-width="2" opacity="0.5"/><line x1="450" y1="300" x2="550" y2="350" stroke="%2300fff0" stroke-width="2" opacity="0.5"/></svg>') center/cover;">
+            </div>
+        </div>
+    </section>
+
+    <!-- Process -->
+    <section class="process">
+        <h2>Extraction to Integration</h2>
+        <div class="process-grid">
+            <div class="process-step">
+                <div class="step-icon">📍</div>
+                <h3 class="step-title">Request</h3>
+                <p class="step-desc">One-tap emergency extraction</p>
+            </div>
+            <div class="process-step">
+                <div class="step-icon">🚗</div>
+                <h3 class="step-title">Deploy</h3>
+                <p class="step-desc">Nearest unit dispatched</p>
+            </div>
+            <div class="process-step">
+                <div class="step-icon">🤖</div>
+                <h3 class="step-title">Extract</h3>
+                <p class="step-desc">Safe autonomous pickup</p>
+            </div>
+            <div class="process-step">
+                <div class="step-icon">🏥</div>
+                <h3 class="step-title">Medical</h3>
+                <p class="step-desc">Immediate care & assessment</p>
+            </div>
+            <div class="process-step">
+                <div class="step-icon">🏠</div>
+                <h3 class="step-title">Shelter</h3>
+                <p class="step-desc">Safe house accommodation</p>
+            </div>
+            <div class="process-step">
+                <div class="step-icon">💼</div>
+                <h3 class="step-title">Integrate</h3>
+                <p class="step-desc">Job & community placement</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+        <h2>Ready When You Need Us</h2>
+        <p>Download the app for instant access to extraction services</p>
+        <div class="download-buttons">
+            <button class="download-btn">
+                <span>📱</span>
+                <span>App Store</span>
+            </button>
+            <button class="download-btn">
+                <span>🤖</span>
+                <span>Google Play</span>
+            </button>
+            <button class="download-btn">
+                <span>🌐</span>
+                <span>Web App</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>RESCUE © 2024 | Available 24/7 Worldwide | Encrypted & Anonymous</p>
+    </footer>
+
+    <!-- Modal -->
+    <div id="extractionModal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Emergency Extraction</h3>
+            <p>
+                This will immediately dispatch the nearest Cybertruck and Optimus unit to your location. 
+                Your position will be shared securely with our extraction team.
+            </p>
+            <p>
+                Current estimated response time: <strong>6 minutes</strong>
+            </p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn confirm" onclick="confirmExtraction()">Confirm Extraction</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        function openModal() {
+            document.getElementById('extractionModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('extractionModal').classList.remove('active');
+        }
+
+        function confirmExtraction() {
+            closeModal();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        alert('✓ Extraction unit dispatched\n\nCybertruck ETA: 6 minutes\nOptimus: Onboard\nSafe house: Prepared\n\nStay in a secure location. Help is coming.');
+                    },
+                    (error) => {
+                        alert('Location access required for extraction. Please enable location services and try again.');
+                    }
+                );
+            } else {
+                alert('✓ Extraction unit dispatched\n\nCybertruck ETA: 6 minutes\nOptimus: Onboard\nSafe house: Prepared\n\nStay in a secure location. Help is coming.');
+            }
+        }
+
+        // Language change
+        function changeLanguage(lang) {
+            console.log('Changing language to:', lang);
+            // In production, this would load translated content
+        }
+
+        // Close modal on outside click
+        document.getElementById('extractionModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Animate stats on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeIn 1s ease-out';
+                }
+            });
+        });
+
+        document.querySelectorAll('.stat').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
